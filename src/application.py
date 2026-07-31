@@ -1,6 +1,5 @@
 import gi
 
-gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 
 from gi.repository import Adw
@@ -15,5 +14,9 @@ class ChecklistApplication(Adw.Application):
         )
 
     def do_activate(self):
-        window = MainWindow(self)
+        window = self.props.active_window
+
+        if window is None:
+            window = MainWindow(self)
+
         window.present()

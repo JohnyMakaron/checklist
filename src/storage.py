@@ -1,27 +1,31 @@
 import json
-import os
+from pathlib import Path
 
-DATA_FILE = os.path.join(
-    os.path.dirname(__file__),
-    "..",
-    "data",
-    "tasks.json",
-)
+DATA_DIR = Path(__file__).parent.parent / "data"
+DATA_FILE = DATA_DIR / "tasks.json"
 
 
 def load_tasks():
-    if not os.path.exists(DATA_FILE):
+    """Load tasks from disk."""
+    if not DATA_FILE.exists():
         return []
 
     try:
-        with open(DATA_FILE, "r") as file:
-            return json.load(file)
-    except Exception:
-        return []
+        with DATA_FILE.open("r", encoding="utf-8") as f:
+            data = json.load(f)
+
+            if isinstance(data, list):
+                return data
+
+    except Exception as e:
+        print(f"Error loading tasks: {e}")
+
+    return []
 
 
 def save_tasks(tasks):
-    os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+    """Save tasks to disk."""
+    DATA_DIR.mkdir(exist_ok=True)
 
-    with open(DATA_FILE, "w") as file:
-        json.dump(tasks, file, indent=4)
+    with DATA_FILE.open("w", encoding="utf-8") as f:
+        json.dump(tasks, f, indent=4)

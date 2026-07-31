@@ -6,13 +6,19 @@ from gi.repository import Gtk
 
 
 class TaskRow(Gtk.Box):
-    def __init__(self, text, delete_callback):
+    def __init__(self, task, changed_callback, delete_callback):
         super().__init__(
             orientation=Gtk.Orientation.HORIZONTAL,
-            spacing=6,
+            spacing=8,
         )
 
-        self.checkbox = Gtk.CheckButton(label=text)
+        self.changed_callback = changed_callback
+
+        self.checkbox = Gtk.CheckButton(
+            label=task["text"]
+        )
+        self.checkbox.set_active(task["completed"])
+        self.checkbox.connect("toggled", self.on_toggled)
 
         self.delete_button = Gtk.Button(label="🗑")
         self.delete_button.connect(
@@ -23,8 +29,11 @@ class TaskRow(Gtk.Box):
         self.append(self.checkbox)
         self.append(self.delete_button)
 
-    def is_completed(self):
-        return self.checkbox.get_active()
+    def on_toggled(self, button):
+        self.changed_callback()
 
-    def get_text(self):
-        return self.checkbox.get_label()
+    def to_dict(self):
+        return {
+            "text": self.checkbox.get_label(),
+            "completed": self.checkbox.get_active(),
+        }
