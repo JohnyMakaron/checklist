@@ -1,13 +1,4 @@
-# Python
 __pycache__/
 *.py[cod]
-
-# Virtual environment
 .venv/
-
-# IDE settings
-.vscode/
-.idea/
-
-# User data (we'll create this later)
 data/tasks.json
