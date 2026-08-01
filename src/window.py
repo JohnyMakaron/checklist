@@ -5,7 +5,12 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Gtk, Adw
 
-from task_row import TaskRow
+try:
+    from .task_row import TaskRow
+    from .storage import load_tasks, save_tasks
+except ImportError:
+    from task_row import TaskRow
+    from storage import load_tasks, save_tasks
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -15,14 +20,12 @@ class MainWindow(Adw.ApplicationWindow):
         self.set_title("Checklist")
         self.set_default_size(800, 600)
 
-        # Header
         header = Adw.HeaderBar()
 
         title = Gtk.Label(label="Checklist")
         title.add_css_class("title")
         header.set_title_widget(title)
 
-        # Main layout
         main_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=12,
@@ -32,7 +35,6 @@ class MainWindow(Adw.ApplicationWindow):
             margin_end=12,
         )
 
-        # Input row
         input_box = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL,
             spacing=6,
@@ -48,18 +50,15 @@ class MainWindow(Adw.ApplicationWindow):
         input_box.append(self.entry)
         input_box.append(self.add_button)
 
-        # Task list
         self.task_list = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=6,
         )
 
-        # Scroll area
         scroller = Gtk.ScrolledWindow()
         scroller.set_vexpand(True)
         scroller.set_child(self.task_list)
 
-        # Assemble layout
         main_box.append(input_box)
         main_box.append(scroller)
 
@@ -69,20 +68,51 @@ class MainWindow(Adw.ApplicationWindow):
 
         self.set_content(toolbar)
 
+        self._load_saved_tasks()
+
+    def _load_saved_tasks(self):
+        tasks = load_tasks()
+        for task in tasks:
+            self._add_task_row(task, save=False)
+
+        self._save_tasks()
+
+    def _add_task_row(self, task, save=True):
+        row = TaskRow(task, self.on_task_changed, self.on_task_deleted)
+        self.task_list.append(row)
+
+        if save:
+            self._save_tasks()
+
+    def _save_tasks(self):
+        tasks = []
+        child = self.task_list.get_first_child()
+
+        while child is not None:
+            next_child = child.get_next_sibling()
+            if isinstance(child, TaskRow):
+                tasks.append(child.to_dict())
+            child = next_child
+
+        save_tasks(tasks)
+
     def on_add_clicked(self, button):
         text = self.entry.get_text().strip()
 
         if not text:
             return
 
-        row = TaskRow(text, self.remove_task)
-        self.task_list.append(row)
-
+        self._add_task_row({"text": text, "completed": False})
         self.entry.set_text("")
         self.entry.grab_focus()
 
     def on_entry_activate(self, entry):
         self.on_add_clicked(None)
 
-    def remove_task(self, task):
-        self.task_list.remove(task)
+    def on_task_changed(self, task_row):
+        self._save_tasks()
+
+    def on_task_deleted(self, task_row):
+        self.task_list.remove(task_row)
+        self._save_tasks()
+

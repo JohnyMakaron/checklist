@@ -4,7 +4,10 @@ gi.require_version("Adw", "1")
 
 from gi.repository import Adw
 
-from window import MainWindow
+try:
+    from .window import MainWindow
+except ImportError:
+    from window import MainWindow
 
 
 class ChecklistApplication(Adw.Application):

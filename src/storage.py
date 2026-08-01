@@ -14,9 +14,17 @@ def load_tasks():
         with DATA_FILE.open("r", encoding="utf-8") as f:
             data = json.load(f)
 
-            if isinstance(data, list):
-                return data
-
+        if isinstance(data, list):
+            cleaned_tasks = []
+            for item in data:
+                if isinstance(item, dict):
+                    cleaned_tasks.append(
+                        {
+                            "text": str(item.get("text", "")).strip(),
+                            "completed": bool(item.get("completed", False)),
+                        }
+                    )
+            return cleaned_tasks
     except Exception as e:
         print(f"Error loading tasks: {e}")
 
@@ -25,7 +33,17 @@ def load_tasks():
 
 def save_tasks(tasks):
     """Save tasks to disk."""
-    DATA_DIR.mkdir(exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    cleaned_tasks = []
+    for item in tasks:
+        if isinstance(item, dict):
+            cleaned_tasks.append(
+                {
+                    "text": str(item.get("text", "")).strip(),
+                    "completed": bool(item.get("completed", False)),
+                }
+            )
 
     with DATA_FILE.open("w", encoding="utf-8") as f:
-        json.dump(tasks, f, indent=4)
+        json.dump(cleaned_tasks, f, indent=4)

@@ -1,4 +1,7 @@
-from application import ChecklistApplication
+try:
+    from .application import ChecklistApplication
+except ImportError:
+    from application import ChecklistApplication
 
 
 def main():
