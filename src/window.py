@@ -44,10 +44,17 @@ class MainWindow(Adw.ApplicationWindow):
         self.entry.set_placeholder_text("Type a new task...")
         self.entry.connect("activate", self.on_entry_activate)
 
+        self.priority_combo = Gtk.ComboBoxText()
+        self.priority_combo.append_text("Low")
+        self.priority_combo.append_text("Medium")
+        self.priority_combo.append_text("High")
+        self.priority_combo.set_active(1)
+
         self.add_button = Gtk.Button(label="Add")
         self.add_button.connect("clicked", self.on_add_clicked)
 
         input_box.append(self.entry)
+        input_box.append(self.priority_combo)
         input_box.append(self.add_button)
 
         self.task_list = Gtk.Box(
@@ -102,8 +109,13 @@ class MainWindow(Adw.ApplicationWindow):
         if not text:
             return
 
-        self._add_task_row({"text": text, "completed": False})
+        priority = self.priority_combo.get_active_text().lower()
+        if priority not in {"low", "medium", "high"}:
+            priority = "medium"
+
+        self._add_task_row({"text": text, "completed": False, "priority": priority})
         self.entry.set_text("")
+        self.priority_combo.set_active(1)
         self.entry.grab_focus()
 
     def on_entry_activate(self, entry):
