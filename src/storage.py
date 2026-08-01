@@ -3,18 +3,6 @@ from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 DATA_FILE = DATA_DIR / "tasks.json"
-VALID_PRIORITIES = {"low", "medium", "high"}
-DEFAULT_PRIORITY = "medium"
-
-
-def normalize_priority(priority):
-    """Return a supported priority string, defaulting to medium."""
-    if isinstance(priority, str):
-        normalized = priority.strip().lower()
-        if normalized in VALID_PRIORITIES:
-            return normalized
-
-    return DEFAULT_PRIORITY
 
 
 def load_tasks():
@@ -34,7 +22,6 @@ def load_tasks():
                         {
                             "text": str(item.get("text", "")).strip(),
                             "completed": bool(item.get("completed", False)),
-                            "priority": normalize_priority(item.get("priority", DEFAULT_PRIORITY)),
                         }
                     )
             return cleaned_tasks
@@ -55,7 +42,6 @@ def save_tasks(tasks):
                 {
                     "text": str(item.get("text", "")).strip(),
                     "completed": bool(item.get("completed", False)),
-                    "priority": normalize_priority(item.get("priority", DEFAULT_PRIORITY)),
                 }
             )
 
