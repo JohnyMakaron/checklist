@@ -2,7 +2,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 
-from gi.repository import Gtk, GLib, Pango
+from gi.repository import Gtk, GLib, Pango, Gdk
 
 
 class TaskRow(Gtk.Box):
@@ -34,6 +34,27 @@ class TaskRow(Gtk.Box):
         self.append(self.task_label)
         self.append(self.delete_button)
 
+        self.drag_source = Gtk.DragSource()
+        self.drag_source.set_actions(Gdk.DragAction.MOVE)
+        self.drag_source.connect("prepare", self.on_drag_prepare)
+        self.drag_source.connect("drag-begin", self.on_drag_begin)
+        self.drag_source.connect("drag-end", self.on_drag_end)
+        self.add_controller(self.drag_source)
+
+        self.drop_target = Gtk.DropTarget.new(type(self), Gdk.DragAction.MOVE)
+        self.drop_target.connect("drop", self.on_drop)
+        self.add_controller(self.drop_target)
+
+        self.set_drag_enabled(True)
+
+    def set_drag_enabled(self, enabled):
+        if enabled:
+            self.drag_source.set_actions(Gdk.DragAction.MOVE)
+            self.drop_target.set_actions(Gdk.DragAction.MOVE)
+        else:
+            self.drag_source.set_actions(Gdk.DragAction.NONE)
+            self.drop_target.set_actions(Gdk.DragAction.NONE)
+
     def _update_task_label(self):
         text = GLib.markup_escape_text(self.task_text)
         if self.checkbox.get_active():
@@ -42,6 +63,55 @@ class TaskRow(Gtk.Box):
             )
         else:
             self.task_label.set_markup(text)
+
+    def on_drag_prepare(self, drag_source, x, y):
+        return Gdk.ContentProvider.new_for_value(self)
+
+    def on_drag_begin(self, drag_source, drag):
+        self.set_cursor_from_name("grabbing")
+
+    def on_drag_end(self, drag_source, drag, delete_data):
+        self.set_cursor_from_name("default")
+
+    def on_drop(self, drop_target, value, x, y):
+        source_row = value
+        parent = self.get_parent()
+
+        if source_row is None or source_row is self or parent is None:
+            return False
+
+        if source_row.get_parent() is not parent:
+            return False
+
+        source_index = None
+        target_index = None
+        child = parent.get_first_child()
+        index = 0
+
+        while child is not None:
+            if child is source_row:
+                source_index = index
+            if child is self:
+                target_index = index
+            child = child.get_next_sibling()
+            index += 1
+
+        if source_index is None or target_index is None:
+            return False
+
+        parent.remove(source_row)
+
+        if source_index < target_index:
+            parent.insert_child_after(source_row, self)
+        else:
+            previous_sibling = self.get_prev_sibling()
+            if previous_sibling is None:
+                parent.prepend(source_row)
+            else:
+                parent.insert_child_after(source_row, previous_sibling)
+
+        self.changed_callback(self)
+        return True
 
     def on_toggled(self, button):
         self._update_task_label()

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.misterg.checklist</id>
+  <name>Checklist</name>
+  <summary>Simple GTK4 + Libadwaita checklist manager</summary>
+  <description>
+    <p>Checklist is a lightweight task manager built with GTK4 and Libadwaita.</p>
+  </description>
+  <launchable type="desktop-id">com.misterg.checklist.desktop</launchable>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer_name>MisterG</developer_name>
+  <categories>
+    <category>Utility</category>
+    <category>Office</category>
+  </categories>
+  <content_rating type="oars-1.1" />
+</component>

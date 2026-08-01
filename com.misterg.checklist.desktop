@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Checklist
+Comment=Simple GTK4 + Libadwaita checklist manager
+Exec=python3 -m src.main
+Icon=com.misterg.checklist
+Terminal=false
+Categories=Utility;Office;
+StartupNotify=true
+Keywords=checklist;todo;tasks;

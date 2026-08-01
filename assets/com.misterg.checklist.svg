@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Checklist icon">
+  <rect width="128" height="128" rx="24" fill="#3584e4"/>
+  <path d="M38 36h52a6 6 0 0 1 6 6v44a6 6 0 0 1-6 6H38a6 6 0 0 1-6-6V42a6 6 0 0 1 6-6z" fill="#ffffff" fill-opacity="0.14"/>
+  <path d="M42 48h44" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M42 66h44" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M42 84h32" stroke="#ffffff" stroke-width="8" stroke-linecap="round"/>
+  <path d="M84 56l6 6 10-12" fill="none" stroke="#cfe8ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -119,6 +119,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._add_task_row(task, save=False)
 
         self._update_empty_state()
+        self._apply_filter()
         self._save_tasks()
 
     def _add_task_row(self, task, save=True):
@@ -154,7 +155,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.empty_state.set_visible(not has_tasks)
 
     def _apply_filter(self):
-        child = self.task_list.get_first_child()
+        task_list = self.task_list
+        child = task_list.get_first_child()
 
         while child is not None:
             next_child = child.get_next_sibling()
@@ -162,10 +164,13 @@ class MainWindow(Adw.ApplicationWindow):
             if isinstance(child, TaskRow):
                 if self.current_filter == "all":
                     child.set_visible(True)
+                    child.set_drag_enabled(True)
                 elif self.current_filter == "active":
                     child.set_visible(not child.checkbox.get_active())
+                    child.set_drag_enabled(False)
                 elif self.current_filter == "completed":
                     child.set_visible(child.checkbox.get_active())
+                    child.set_drag_enabled(False)
 
             child = next_child
 

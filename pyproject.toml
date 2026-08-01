@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "checklist"
+version = "1.0.0"
+description = "GTK4 + Libadwaita checklist manager"
+requires-python = ">=3.10"
+dependencies = ["PyGObject"]
+
+[project.scripts]
+checklist = "src.main:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
