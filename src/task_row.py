@@ -6,6 +6,25 @@ from gi.repository import Gtk, GLib, Pango, Gdk
 
 
 class TaskRow(Gtk.Box):
+    @staticmethod
+    def insert_task_row_at_index(parent, row, index):
+        child = parent.get_first_child()
+        current_index = 0
+
+        while child is not None:
+            if isinstance(child, TaskRow):
+                if current_index == index:
+                    previous_sibling = child.get_prev_sibling()
+                    if previous_sibling is None:
+                        parent.prepend(row)
+                    else:
+                        parent.insert_child_after(row, previous_sibling)
+                    return
+                current_index += 1
+            child = child.get_next_sibling()
+
+        parent.append(row)
+
     def __init__(self, task, changed_callback, delete_callback):
         super().__init__(
             orientation=Gtk.Orientation.HORIZONTAL,
@@ -89,12 +108,13 @@ class TaskRow(Gtk.Box):
         index = 0
 
         while child is not None:
-            if child is source_row:
-                source_index = index
-            if child is self:
-                target_index = index
+            if isinstance(child, TaskRow):
+                if child is source_row:
+                    source_index = index
+                if child is self:
+                    target_index = index
+                index += 1
             child = child.get_next_sibling()
-            index += 1
 
         if source_index is None or target_index is None:
             return False
@@ -102,13 +122,9 @@ class TaskRow(Gtk.Box):
         parent.remove(source_row)
 
         if source_index < target_index:
-            parent.insert_child_after(source_row, self)
+            TaskRow.insert_task_row_at_index(parent, source_row, target_index + 1)
         else:
-            previous_sibling = self.get_prev_sibling()
-            if previous_sibling is None:
-                parent.prepend(source_row)
-            else:
-                parent.insert_child_after(source_row, previous_sibling)
+            TaskRow.insert_task_row_at_index(parent, source_row, target_index)
 
         self.changed_callback(self)
         return True

@@ -17,6 +17,9 @@ class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app):
         super().__init__(application=app)
 
+        self.pending_undo = None
+        self._pending_toast = None
+
         self.set_title("Checklist")
         self.set_default_size(800, 600)
 
@@ -108,7 +111,10 @@ class MainWindow(Adw.ApplicationWindow):
         toolbar.add_top_bar(header)
         toolbar.set_content(main_box)
 
-        self.set_content(toolbar)
+        self.toast_overlay = Adw.ToastOverlay()
+        self.toast_overlay.set_child(toolbar)
+
+        self.set_content(self.toast_overlay)
 
         self.current_filter = "all"
         self._load_saved_tasks()
@@ -202,8 +208,69 @@ class MainWindow(Adw.ApplicationWindow):
         self._save_tasks()
         self._apply_filter()
 
+    def _find_task_row_index(self, task_row):
+        index = 0
+        child = self.task_list.get_first_child()
+
+        while child is not None:
+            if isinstance(child, TaskRow) and child is task_row:
+                return index
+            if isinstance(child, TaskRow):
+                index += 1
+            child = child.get_next_sibling()
+
+        return 0
+
+    def _insert_task_row_at_index(self, row, index):
+        TaskRow.insert_task_row_at_index(self.task_list, row, index)
+
+    def _show_delete_undo_toast(self, deleted_items):
+        if self._pending_toast is not None:
+            self._pending_toast.dismiss()
+
+        self.pending_undo = {
+            "kind": "delete_task",
+            "items": deleted_items,
+        }
+
+        toast = Adw.Toast()
+        toast.set_title("Task deleted")
+        toast.set_button_label("Undo")
+        toast.set_timeout(3)
+        toast.connect("button-clicked", self.on_undo_delete_clicked)
+        toast.connect("dismissed", self.on_pending_undo_expired)
+        self._pending_toast = toast
+        self.toast_overlay.add_toast(toast)
+
+    def on_pending_undo_expired(self, toast):
+        if self._pending_toast is toast:
+            self._pending_toast = None
+        self.pending_undo = None
+
+    def on_undo_delete_clicked(self, toast):
+        if self.pending_undo is None:
+            return
+
+        for item in reversed(self.pending_undo["items"]):
+            row = TaskRow(item["task"], self.on_task_changed, self.on_task_deleted)
+            self._insert_task_row_at_index(row, item["index"])
+
+        self.pending_undo = None
+        self._update_empty_state()
+        self._apply_filter()
+        self._save_tasks()
+
     def on_task_deleted(self, task_row):
+        deleted_index = self._find_task_row_index(task_row)
+        deleted_items = [
+            {
+                "task": task_row.to_dict(),
+                "index": deleted_index,
+            }
+        ]
+
         self.task_list.remove(task_row)
         self._update_empty_state()
         self._save_tasks()
+        self._show_delete_undo_toast(deleted_items)
 
