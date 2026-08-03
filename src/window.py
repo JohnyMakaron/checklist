@@ -29,6 +29,11 @@ class MainWindow(Adw.ApplicationWindow):
         title.add_css_class("title")
         header.set_title_widget(title)
 
+        self.clear_completed_button = Gtk.Button(label="Clear Completed")
+        self.clear_completed_button.connect("clicked", self.on_clear_completed_clicked)
+        self.clear_completed_button.set_sensitive(False)
+        header.pack_end(self.clear_completed_button)
+
         main_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
             spacing=12,
@@ -127,11 +132,13 @@ class MainWindow(Adw.ApplicationWindow):
         self._update_empty_state()
         self._apply_filter()
         self._save_tasks()
+        self._sync_clear_completed_button_state()
 
     def _add_task_row(self, task, save=True):
         row = TaskRow(task, self.on_task_changed, self.on_task_deleted)
         self.task_list.append(row)
         self._update_empty_state()
+        self._sync_clear_completed_button_state()
 
         if save:
             self._save_tasks()
@@ -159,6 +166,19 @@ class MainWindow(Adw.ApplicationWindow):
             child = child.get_next_sibling()
 
         self.empty_state.set_visible(not has_tasks)
+        self._sync_clear_completed_button_state()
+
+    def _sync_clear_completed_button_state(self):
+        has_completed = False
+        child = self.task_list.get_first_child()
+
+        while child is not None:
+            if isinstance(child, TaskRow) and child.checkbox.get_active():
+                has_completed = True
+                break
+            child = child.get_next_sibling()
+
+        self.clear_completed_button.set_sensitive(has_completed)
 
     def _apply_filter(self):
         task_list = self.task_list
@@ -207,6 +227,7 @@ class MainWindow(Adw.ApplicationWindow):
     def on_task_changed(self, task_row):
         self._save_tasks()
         self._apply_filter()
+        self._sync_clear_completed_button_state()
 
     def _find_task_row_index(self, task_row):
         index = 0
@@ -224,7 +245,7 @@ class MainWindow(Adw.ApplicationWindow):
     def _insert_task_row_at_index(self, row, index):
         TaskRow.insert_task_row_at_index(self.task_list, row, index)
 
-    def _show_delete_undo_toast(self, deleted_items):
+    def _show_undo_toast(self, message, deleted_items):
         if self._pending_toast is not None:
             self._pending_toast.dismiss()
 
@@ -234,7 +255,7 @@ class MainWindow(Adw.ApplicationWindow):
         }
 
         toast = Adw.Toast()
-        toast.set_title("Task deleted")
+        toast.set_title(message)
         toast.set_button_label("Undo")
         toast.set_timeout(3)
         toast.connect("button-clicked", self.on_undo_delete_clicked)
@@ -259,6 +280,36 @@ class MainWindow(Adw.ApplicationWindow):
         self._update_empty_state()
         self._apply_filter()
         self._save_tasks()
+        self._sync_clear_completed_button_state()
+
+    def on_clear_completed_clicked(self, button):
+        deleted_rows = []
+        deleted_items = []
+        child = self.task_list.get_first_child()
+
+        while child is not None:
+            next_child = child.get_next_sibling()
+
+            if isinstance(child, TaskRow) and child.checkbox.get_active():
+                deleted_rows.append(child)
+                deleted_items.append(
+                    {
+                        "task": child.to_dict(),
+                        "index": self._find_task_row_index(child),
+                    }
+                )
+
+            child = next_child
+
+        if not deleted_items:
+            return
+
+        for row in deleted_rows:
+            self.task_list.remove(row)
+
+        self._update_empty_state()
+        self._save_tasks()
+        self._show_undo_toast("Completed tasks cleared", deleted_items)
 
     def on_task_deleted(self, task_row):
         deleted_index = self._find_task_row_index(task_row)
@@ -272,5 +323,5 @@ class MainWindow(Adw.ApplicationWindow):
         self.task_list.remove(task_row)
         self._update_empty_state()
         self._save_tasks()
-        self._show_delete_undo_toast(deleted_items)
+        self._show_undo_toast("Task deleted", deleted_items)
 
