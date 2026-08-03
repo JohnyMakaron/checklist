@@ -8,9 +8,11 @@ from gi.repository import Gtk, Adw
 try:
     from .task_row import TaskRow
     from .storage import load_tasks, save_tasks
+    from .preferences import PreferencesWindow
 except ImportError:
     from task_row import TaskRow
     from storage import load_tasks, save_tasks
+    from preferences import PreferencesWindow
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -33,6 +35,12 @@ class MainWindow(Adw.ApplicationWindow):
         self.clear_completed_button.connect("clicked", self.on_clear_completed_clicked)
         self.clear_completed_button.set_sensitive(False)
         header.pack_end(self.clear_completed_button)
+
+        self.settings_button = Gtk.Button()
+        self.settings_button.set_icon_name("preferences-system-symbolic")
+        self.settings_button.set_tooltip_text("Preferences")
+        self.settings_button.connect("clicked", self.on_settings_clicked)
+        header.pack_end(self.settings_button)
 
         main_box = Gtk.Box(
             orientation=Gtk.Orientation.VERTICAL,
@@ -223,6 +231,10 @@ class MainWindow(Adw.ApplicationWindow):
                 self.current_filter = "completed"
 
             self._apply_filter()
+
+    def on_settings_clicked(self, button):
+        preferences = PreferencesWindow(self.get_application())
+        preferences.present()
 
     def on_task_changed(self, task_row):
         self._save_tasks()
