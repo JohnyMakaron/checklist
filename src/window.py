@@ -9,10 +9,12 @@ try:
     from .task_row import TaskRow
     from .storage import load_tasks, save_tasks
     from .preferences import PreferencesWindow
+    from .settings import load_preferences
 except ImportError:
     from task_row import TaskRow
     from storage import load_tasks, save_tasks
     from preferences import PreferencesWindow
+    from settings import load_preferences
 
 
 class MainWindow(Adw.ApplicationWindow):
@@ -24,6 +26,9 @@ class MainWindow(Adw.ApplicationWindow):
 
         self.set_title("Checklist")
         self.set_default_size(800, 600)
+
+        preferences = load_preferences()
+        self.set_opacity(preferences["window_opacity"] / 100.0)
 
         header = Adw.HeaderBar()
 
@@ -233,7 +238,7 @@ class MainWindow(Adw.ApplicationWindow):
             self._apply_filter()
 
     def on_settings_clicked(self, button):
-        preferences = PreferencesWindow(self.get_application())
+        preferences = PreferencesWindow(self.get_application(), self)
         preferences.present()
 
     def on_task_changed(self, task_row):
