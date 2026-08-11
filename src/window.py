@@ -29,6 +29,7 @@ class MainWindow(Adw.ApplicationWindow):
 
         preferences = load_preferences()
         self.set_opacity(preferences["window_opacity"] / 100.0)
+        self.font_color = preferences.get("font_color", "Default")
 
         header = Adw.HeaderBar()
 
@@ -137,6 +138,16 @@ class MainWindow(Adw.ApplicationWindow):
         self.current_filter = "all"
         self._load_saved_tasks()
 
+    def apply_task_font_color(self, font_color):
+        self.font_color = font_color
+        child = self.task_list.get_first_child()
+
+        while child is not None:
+            next_child = child.get_next_sibling()
+            if isinstance(child, TaskRow):
+                child.set_font_color(font_color)
+            child = next_child
+
     def _load_saved_tasks(self):
         tasks = load_tasks()
         for task in tasks:
@@ -148,7 +159,7 @@ class MainWindow(Adw.ApplicationWindow):
         self._sync_clear_completed_button_state()
 
     def _add_task_row(self, task, save=True):
-        row = TaskRow(task, self.on_task_changed, self.on_task_deleted)
+        row = TaskRow(task, self.on_task_changed, self.on_task_deleted, font_color=self.font_color)
         self.task_list.append(row)
         self._update_empty_state()
         self._sync_clear_completed_button_state()
@@ -290,7 +301,7 @@ class MainWindow(Adw.ApplicationWindow):
             return
 
         for item in reversed(self.pending_undo["items"]):
-            row = TaskRow(item["task"], self.on_task_changed, self.on_task_deleted)
+            row = TaskRow(item["task"], self.on_task_changed, self.on_task_deleted, font_color=self.font_color)
             self._insert_task_row_at_index(row, item["index"])
 
         self.pending_undo = None

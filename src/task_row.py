@@ -4,6 +4,16 @@ gi.require_version("Gtk", "4.0")
 
 from gi.repository import Gtk, GLib, Pango, Gdk
 
+FONT_COLOR_MAP = {
+    "Default": None,
+    "White": "white",
+    "Gray": "gray",
+    "Black": "black",
+    "Blue": "blue",
+    "Green": "green",
+    "Red": "red",
+}
+
 
 class TaskRow(Gtk.Box):
     @staticmethod
@@ -25,7 +35,7 @@ class TaskRow(Gtk.Box):
 
         parent.append(row)
 
-    def __init__(self, task, changed_callback, delete_callback):
+    def __init__(self, task, changed_callback, delete_callback, font_color="Default"):
         super().__init__(
             orientation=Gtk.Orientation.HORIZONTAL,
             spacing=8,
@@ -34,6 +44,7 @@ class TaskRow(Gtk.Box):
         self.changed_callback = changed_callback
         self.delete_callback = delete_callback
         self.task_text = str(task.get("text", "")).strip()
+        self.font_color = font_color
 
         self.checkbox = Gtk.CheckButton()
         self.checkbox.set_active(bool(task["completed"]))
@@ -76,12 +87,25 @@ class TaskRow(Gtk.Box):
 
     def _update_task_label(self):
         text = GLib.markup_escape_text(self.task_text)
+        color_name = FONT_COLOR_MAP.get(self.font_color)
+        markup = text
+
+        span_attributes = []
+        if color_name is not None:
+            span_attributes.append(f'color="{color_name}"')
+
         if self.checkbox.get_active():
-            self.task_label.set_markup(
-                f'<span strikethrough="true" alpha="50%">{text}</span>'
-            )
-        else:
-            self.task_label.set_markup(text)
+            span_attributes.append('strikethrough="true"')
+            span_attributes.append('alpha="50%"')
+
+        if span_attributes:
+            markup = f"<span {' '.join(span_attributes)}>{text}</span>"
+
+        self.task_label.set_markup(markup)
+
+    def set_font_color(self, font_color):
+        self.font_color = font_color
+        self._update_task_label()
 
     def on_drag_prepare(self, drag_source, x, y):
         return Gdk.ContentProvider.new_for_value(self)

@@ -54,7 +54,29 @@ class PreferencesWindow(Adw.PreferencesWindow):
 
         self.opacity_row.add_suffix(self.opacity_controls)
 
+        self.font_color_row = Adw.ComboRow()
+        self.font_color_row.set_title("Font Color")
+
+        font_color_options = [
+            "Default",
+            "White",
+            "Gray",
+            "Black",
+            "Blue",
+            "Green",
+            "Red",
+        ]
+        self.font_color_options = font_color_options
+
+        self.font_color_dropdown = Gtk.DropDown.new_from_strings(font_color_options)
+        current_color = preferences.get("font_color", "Default")
+        selected_index = font_color_options.index(current_color) if current_color in font_color_options else 0
+        self.font_color_dropdown.set_selected(selected_index)
+        self.font_color_dropdown.connect("notify::selected", self.on_font_color_selected)
+        self.font_color_row.set_child(self.font_color_dropdown)
+
         appearance_group.add(self.opacity_row)
+        appearance_group.add(self.font_color_row)
         page.add(appearance_group)
 
         behavior_group = Adw.PreferencesGroup()
@@ -93,6 +115,14 @@ class PreferencesWindow(Adw.PreferencesWindow):
 
     def on_autostart_toggled(self, row, pspec):
         self._set_autostart_enabled(row.get_active())
+
+    def on_font_color_selected(self, dropdown, pspec):
+        selected = self.font_color_dropdown.get_selected()
+        font_color = self.font_color_options[selected]
+        save_preferences({"font_color": font_color})
+
+        if self.window is not None and hasattr(self.window, "apply_task_font_color"):
+            self.window.apply_task_font_color(font_color)
 
     def _set_autostart_enabled(self, enabled):
         self.autostart_path.parent.mkdir(parents=True, exist_ok=True)
